@@ -129,6 +129,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         final boolean nonfairTryAcquire(int acquires) {
             final Thread current = Thread.currentThread();
             int c = getState();
+
             if (c == 0) {
                 if (compareAndSetState(0, acquires)) {
                     setExclusiveOwnerThread(current);
@@ -145,6 +146,16 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             return false;
         }
 
+        /**
+         * 如果exclusiveOwnerThread不是当前线程 抛出异常
+         * 如果当前state-releases为0返回true 并置空exclusiveOwnerThread 否则返回false
+         * 设置state为state-releases
+         * @param releases the release argument. This value is always the one
+         *        passed to a release method, or the current state value upon
+         *        entry to a condition wait.  The value is otherwise
+         *        uninterpreted and can represent anything you like.
+         * @return
+         */
         protected final boolean tryRelease(int releases) {
             int c = getState() - releases;
             if (Thread.currentThread() != getExclusiveOwnerThread())
