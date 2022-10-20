@@ -27,6 +27,7 @@ package com.sun.source.util;
 
 import com.sun.source.doctree.DocCommentTree;
 import com.sun.source.doctree.DocTree;
+import com.sun.source.tree.CompilationUnitTree;
 
 /**
  * Provides methods to obtain the position of a DocTree within a javadoc comment.

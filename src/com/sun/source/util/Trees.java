@@ -25,6 +25,9 @@
 
 package com.sun.source.util;
 
+import com.sun.source.tree.CatchTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
 import java.lang.reflect.Method;
 
 import javax.annotation.processing.ProcessingEnvironment;

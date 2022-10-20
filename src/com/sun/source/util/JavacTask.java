@@ -25,6 +25,7 @@
 
 package com.sun.source.util;
 
+import com.sun.source.tree.CompilationUnitTree;
 import java.io.IOException;
 
 import javax.annotation.processing.ProcessingEnvironment;

@@ -384,7 +384,7 @@ public abstract class AbstractQueuedSynchronizer
         static final Node EXCLUSIVE = null;
 
         /** waitStatus value to indicate thread has cancelled */
-        static final int CANCELLED =  1;
+        static final int CANCELLED =  1;//由于超时或中断，该节点被取消。节点永远不会离开这个状态。特别是，具有取消节点的线程永远不会再次阻塞
         /** waitStatus value to indicate successor's thread needs unparking */
         static final int SIGNAL    = -1;
         /** waitStatus value to indicate thread is waiting on condition */
@@ -575,9 +575,8 @@ public abstract class AbstractQueuedSynchronizer
      */
     static final long spinForTimeoutThreshold = 1000L;
 
-    /**
+    /** 再尾部通过cas插入节点，并返回原来的尾结点
      * Inserts node into queue, initializing if necessary. See picture above.
-     * 再尾部通过cas插入节点，并返回原来的尾结点
      * @param node the node to insert
      * @return node's predecessor
      */
@@ -663,11 +662,10 @@ public abstract class AbstractQueuedSynchronizer
             LockSupport.unpark(s.thread);
     }
 
-    /**
+    /** 如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
      * Release action for shared mode -- signals successor and ensures
      * propagation. (Note: For exclusive mode, release just amounts
      * to calling unparkSuccessor of head if it needs signal.)
-     * 如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
      */
     private void doReleaseShared() {
         /*
@@ -685,12 +683,10 @@ public abstract class AbstractQueuedSynchronizer
             Node h = head;
             if (h != null && h != tail) {
                 int ws = h.waitStatus;
-                if (ws == Node.SIGNAL) {
-                    //将waitStatus改为0如果没有成功则重新尝试
+                if (ws == Node.SIGNAL) {//将waitStatus改为0如果没有成功则重新尝试
                     if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
                         continue;            // loop to recheck cases
-                    //将h的waitStatus改为0  unpark h后面第一个waitStatus<=0的数据
-                    unparkSuccessor(h);
+                    unparkSuccessor(h);//将h的waitStatus改为0  unpark h后面第一个waitStatus<=0的数据
                 }//如果ws为0并且没有将waitStatus改为PROPAGATE则继续循环尝试 否则结束
                 else if (ws == 0 &&
                          !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
@@ -732,8 +728,7 @@ public abstract class AbstractQueuedSynchronizer
             (h = head) == null || h.waitStatus < 0) {
             Node s = node.next;
             if (s == null || s.isShared())
-                //如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
-                doReleaseShared();
+                doReleaseShared();//如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
         }
     }
 
@@ -751,8 +746,7 @@ public abstract class AbstractQueuedSynchronizer
 
         node.thread = null;
 
-        // Skip cancelled predecessors
-        //跳过取消的节点
+        // Skip cancelled predecessors 跳过取消的节点
         Node pred = node.prev;
         while (pred.waitStatus > 0)
             node.prev = pred = pred.prev;
@@ -768,8 +762,7 @@ public abstract class AbstractQueuedSynchronizer
         node.waitStatus = Node.CANCELLED;
 
         // If we are the tail, remove ourselves.
-        //如果是尾结点 并且成功将pred这只为尾结点  将pred的下个节点改为null
-        if (node == tail && compareAndSetTail(node, pred)) {
+        if (node == tail && compareAndSetTail(node, pred)) {//如果是尾结点 并且成功将pred这只为尾结点  将pred的下个节点改为null
             compareAndSetNext(pred, predNext, null);
         } else {
             // If successor needs signal, try to set pred's next-link
@@ -840,8 +833,7 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if interrupted
      */
     private final boolean parkAndCheckInterrupt() {
-        //可以被unPark或者 interrupt()方法打断  unPark不给标记 返回false interrupt给标记返回true
-        LockSupport.park(this);
+        LockSupport.park(this);//可以被unPark或者 interrupt()方法打断  unPark不给标记 返回false interrupt给标记返回true
         return Thread.interrupted();
     }
 
@@ -857,8 +849,7 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in exclusive uninterruptible mode for thread already in
      * queue. Used by condition wait methods as well as acquire.
-     * 如果node是第二个节点 尝试将node改为头节点 并返回interrupted
-     * 否则
+     * 如果node是第二个节点 尝试将node改为头节点 并返回interrupted 否则
      * @param node the node
      * @param arg the acquire argument
      * @return {@code true} if interrupted while waiting
@@ -875,10 +866,8 @@ public abstract class AbstractQueuedSynchronizer
                     failed = false;
                     return interrupted;
                 }
-                //如果p ws为-1则返回true 并挂起当前线程
-                // 如果p ws大于0 去除node前面ws>0的节点 并充值node的前节点 否则态改为-1 返回f将p的姿alse
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                if (shouldParkAfterFailedAcquire(p, node) &&//如果p ws为-1则返回true 并挂起当前线程
+                    parkAndCheckInterrupt())// 如果p ws大于0 去除node前面ws>0的节点 并充值node的前节点 否则态改为-1 返回f将p的姿alse
                     interrupted = true;
             }
         } finally {
@@ -996,10 +985,8 @@ public abstract class AbstractQueuedSynchronizer
             for (;;) {
                 final Node p = node.predecessor();
                 if (p == head) {
-                    // CountDownLatch state==0 返回1 其他返回-1
-                    int r = tryAcquireShared(arg);
+                    int r = tryAcquireShared(arg);// CountDownLatch state==0 返回1 其他返回-1
                     if (r >= 0) {
-                        System.out.println(Thread.currentThread().getName()+"开始唤醒后面的线程:"+node.next.thread.getName());
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
                         failed = false;
@@ -1351,10 +1338,8 @@ public abstract class AbstractQueuedSynchronizer
      * @return the value returned from {@link #tryReleaseShared}
      */
     public final boolean releaseShared(int arg) {
-        //如果state==0返回false 否则CAS将state减一 如果返回减一后是否等于0
-        if (tryReleaseShared(arg)) {
-            //如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
-            doReleaseShared();
+        if (tryReleaseShared(arg)) {//如果state==0返回false 否则CAS将state减一 如果返回减一后是否等于0
+            doReleaseShared();//如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
             return true;
         }
         return false;
@@ -1531,8 +1516,7 @@ public abstract class AbstractQueuedSynchronizer
         Node t = tail; // Read fields in reverse initialization order
         Node h = head;
         Node s;
-        //头尾节点不相等 且 (头结点的下一节点为空或者尾结点的线程不为当前线程)
-        return h != t &&
+        return h != t &&//头尾节点不相等 且 (头结点的下一节点为空或者尾结点的线程不为当前线程)
             ((s = h.next) == null || s.thread != Thread.currentThread());
     }
 
