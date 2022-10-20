@@ -169,10 +169,19 @@ public class CountDownLatch {
             return getState();
         }
 
+        /**
+         * state==0返回1 否则返回-1
+         * @param acquires the acquire argument. This value is always the one
+         *        passed to an acquire method, or is the value saved on entry
+         *        to a condition wait.  The value is otherwise uninterpreted
+         *        and can represent anything you like.
+         * @return
+         */
         protected int tryAcquireShared(int acquires) {
             return (getState() == 0) ? 1 : -1;
         }
 
+        //如果state==0返回false 否则CAS将state减一 如果返回减一后是否等于0
         protected boolean tryReleaseShared(int releases) {
             // Decrement count; signal when transition to zero
             for (;;) {

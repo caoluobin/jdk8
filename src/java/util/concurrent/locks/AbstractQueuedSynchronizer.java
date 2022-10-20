@@ -999,6 +999,7 @@ public abstract class AbstractQueuedSynchronizer
                     // CountDownLatch state==0 返回1 其他返回-1
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
+                        System.out.println(Thread.currentThread().getName()+"开始唤醒后面的线程:"+node.next.thread.getName());
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
                         failed = false;
@@ -1350,7 +1351,9 @@ public abstract class AbstractQueuedSynchronizer
      * @return the value returned from {@link #tryReleaseShared}
      */
     public final boolean releaseShared(int arg) {
+        //如果state==0返回false 否则CAS将state减一 如果返回减一后是否等于0
         if (tryReleaseShared(arg)) {
+            //如果头结点的状态为SIGNAL则先改为0并upark后面第一个ws<=0的数据 最后将头结点ws改为-3结束
             doReleaseShared();
             return true;
         }
