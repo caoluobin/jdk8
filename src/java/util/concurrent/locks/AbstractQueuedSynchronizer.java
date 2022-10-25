@@ -987,14 +987,14 @@ public abstract class AbstractQueuedSynchronizer
                 if (p == head) {
                     int r = tryAcquireShared(arg);// CountDownLatch state==0 返回1 其他返回-1
                     if (r >= 0) {
-                        setHeadAndPropagate(node, r);
+                        setHeadAndPropagate(node, r);//设置node为头结点清空线程并unpark后面节点线程
                         p.next = null; // help GC
                         failed = false;
                         return;
                     }
                 }
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                if (shouldParkAfterFailedAcquire(p, node) &&//如果pred的ws为SIGNAL则返回true  如果ws>0则去除中间取消的节点 否则将pred的ws置为SIGNAL 并返回false
+                    parkAndCheckInterrupt())//park挂起当前线程 如果当前线程是被打断的而非unpark的则抛出异常
                     throw new InterruptedException();
             }
         } finally {
@@ -1300,7 +1300,7 @@ public abstract class AbstractQueuedSynchronizer
             throws InterruptedException {
         if (Thread.interrupted())
             throw new InterruptedException();
-        if (tryAcquireShared(arg) < 0)
+        if (tryAcquireShared(arg) < 0)//state==0返回1 否则返回-1
             doAcquireSharedInterruptibly(arg);
     }
 
