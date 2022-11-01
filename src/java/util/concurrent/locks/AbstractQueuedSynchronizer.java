@@ -688,7 +688,7 @@ public abstract class AbstractQueuedSynchronizer
                         continue;            // loop to recheck cases
                     unparkSuccessor(h);//将h的waitStatus改为0  unpark h后面第一个waitStatus<=0的数据
                 }//如果ws为0并且没有将waitStatus改为PROPAGATE则继续循环尝试 否则结束
-                else if (ws == 0 &&
+                else if (ws == 0 &&//如果后面新加的节点没有将当前节点ws改为SIGNAL并进入park状态 则无需欢喜直接继续即可
                          !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
                     continue;                // loop on failed CAS
             }
@@ -974,8 +974,8 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
-     * Acquires in shared interruptible mode.
-     * @param arg the acquire argument
+     * 创建当前线程的Node加入Node队列中 如果前一节点是头节点 并且有对应的自愿 则将当前节点设置为node节点并unpark后面的节点线程
+     * 否则先将前一节点ws改为SIGNAL 然后再for循环一轮 或进入上述判断 或挂起当前线程
      */
     private void doAcquireSharedInterruptibly(int arg)
         throws InterruptedException {
@@ -1298,7 +1298,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final void acquireSharedInterruptibly(int arg)
             throws InterruptedException {
-        if (Thread.interrupted())
+        if (Thread.interrupted())//如果当前线程被打断过 则清楚标记抛出异常
             throw new InterruptedException();
         if (tryAcquireShared(arg) < 0)//state==0返回1 否则返回-1
             doAcquireSharedInterruptibly(arg);
@@ -1516,7 +1516,7 @@ public abstract class AbstractQueuedSynchronizer
         Node t = tail; // Read fields in reverse initialization order
         Node h = head;
         Node s;
-        return h != t &&//头尾节点不相等 且 (头结点的下一节点为空或者尾结点的线程不为当前线程)
+        return h != t &&//头尾节点不相等 且 (头结点的下一节点为空或者线程不为当前线程)
             ((s = h.next) == null || s.thread != Thread.currentThread());
     }
 

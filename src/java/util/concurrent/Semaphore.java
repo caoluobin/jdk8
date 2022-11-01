@@ -173,7 +173,7 @@ public class Semaphore implements java.io.Serializable {
         final int getPermits() {
             return getState();
         }
-
+        /**将state减去acquires  如果<0则直接返回  否则CAS更新state然后返回*/
         final int nonfairTryAcquireShared(int acquires) {
             for (;;) {
                 int available = getState();
@@ -183,7 +183,7 @@ public class Semaphore implements java.io.Serializable {
                     return remaining;
             }
         }
-
+        /**将state加上releases  如果如果超出最大值则抛出异常  否则CAS更新state 成功返回true 失败返回false*/
         protected final boolean tryReleaseShared(int releases) {
             for (;;) {
                 int current = getState();
@@ -194,7 +194,7 @@ public class Semaphore implements java.io.Serializable {
                     return true;
             }
         }
-
+        /**将state减去reductions  如果低于整数最小值则抛出异常  否则CAS更新state*/
         final void reducePermits(int reductions) {
             for (;;) {
                 int current = getState();
@@ -205,7 +205,7 @@ public class Semaphore implements java.io.Serializable {
                     return;
             }
         }
-
+        /**将state清零 并返回当前state值*/
         final int drainPermits() {
             for (;;) {
                 int current = getState();
@@ -224,7 +224,7 @@ public class Semaphore implements java.io.Serializable {
         NonfairSync(int permits) {
             super(permits);
         }
-
+        /**将state减去acquires  如果<0则直接返回  否则CAS更新state然后返回*/
         protected int tryAcquireShared(int acquires) {
             return nonfairTryAcquireShared(acquires);
         }
@@ -239,10 +239,10 @@ public class Semaphore implements java.io.Serializable {
         FairSync(int permits) {
             super(permits);
         }
-
+        /**如果头尾节点相等或者头结点下一节点不为空且是当前线程节点 则state减acquires小于0返回 否则CAS更新state然后返回*/
         protected int tryAcquireShared(int acquires) {
             for (;;) {
-                if (hasQueuedPredecessors())
+                if (hasQueuedPredecessors())//头尾节点不相等 且 (头结点的下一节点为空或者线程不为当前线程)
                     return -1;
                 int available = getState();
                 int remaining = available - acquires;
@@ -283,7 +283,7 @@ public class Semaphore implements java.io.Serializable {
     /**
      * Acquires a permit from this semaphore, blocking until one is
      * available, or the thread is {@linkplain Thread#interrupt interrupted}.
-     *
+     * 如果有资源直接返回，否则创建节点挂起 等待唤醒 如果被打断则抛出异常
      * <p>Acquires a permit, if one is available and returns immediately,
      * reducing the number of available permits by one.
      *
@@ -315,7 +315,7 @@ public class Semaphore implements java.io.Serializable {
     /**
      * Acquires a permit from this semaphore, blocking until one is
      * available.
-     *
+     * 和上面一样 只是不会被打断
      * <p>Acquires a permit, if one is available and returns immediately,
      * reducing the number of available permits by one.
      *
@@ -338,7 +338,7 @@ public class Semaphore implements java.io.Serializable {
     /**
      * Acquires a permit from this semaphore, only if one is available at the
      * time of invocation.
-     *
+     * for循环尝试获取一个资源，如果没有资源直接返回，如果有资源CAS获取,失败for循环再试一次
      * <p>Acquires a permit, if one is available and returns immediately,
      * with the value {@code true},
      * reducing the number of available permits by one.
@@ -367,7 +367,7 @@ public class Semaphore implements java.io.Serializable {
      * Acquires a permit from this semaphore, if one becomes available
      * within the given waiting time and the current thread has not
      * been {@linkplain Thread#interrupt interrupted}.
-     *
+     * 先执行一次tryAcquire()获取资源,如果失败如果剩余时间大于1s则先睡眠 如果小于1s则for循环持续尝试获取资源
      * <p>Acquires a permit, if one is available and returns immediately,
      * with the value {@code true},
      * reducing the number of available permits by one.
@@ -411,7 +411,7 @@ public class Semaphore implements java.io.Serializable {
 
     /**
      * Releases a permit, returning it to the semaphore.
-     *
+     * for循环将资源加回去,成功以后唤醒后面等待的数据去获取资源
      * <p>Releases a permit, increasing the number of available permits by
      * one.  If any threads are trying to acquire a permit, then one is
      * selected and given the permit that was just released.  That thread
@@ -622,7 +622,7 @@ public class Semaphore implements java.io.Serializable {
 
     /**
      * Acquires and returns all permits that are immediately available.
-     *
+     * 直接for循环CAS获取剩下的所有资源并返回
      * @return the number of permits acquired
      */
     public int drainPermits() {
@@ -635,7 +635,7 @@ public class Semaphore implements java.io.Serializable {
      * semaphores to track resources that become unavailable. This
      * method differs from {@code acquire} in that it does not block
      * waiting for permits to become available.
-     *
+     * 削减资源
      * @param reduction the number of permits to remove
      * @throws IllegalArgumentException if {@code reduction} is negative
      */
