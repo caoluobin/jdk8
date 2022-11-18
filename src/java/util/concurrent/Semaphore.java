@@ -179,7 +179,7 @@ public class Semaphore implements java.io.Serializable {
                 int available = getState();
                 int remaining = available - acquires;
                 if (remaining < 0 ||
-                    compareAndSetState(available, remaining))
+                    compareAndSetState(available, remaining))//如果拥有资源CAS更新并返回
                     return remaining;
             }
         }

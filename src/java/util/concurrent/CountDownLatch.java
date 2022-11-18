@@ -168,11 +168,11 @@ public class CountDownLatch {
         int getCount() {
             return getState();
         }
-        //state==0è¿”å›1 å¦åˆ™è¿”å›-1
+        //state==0·µ»Ø1 ·ñÔò·µ»Ø-1
         protected int tryAcquireShared(int acquires) {
             return (getState() == 0) ? 1 : -1;
         }
-        //å¦‚æœstate==0è¿”å›false å¦åˆ™CASå°†stateå‡ä¸€ å¦‚æœè¿”å›å‡ä¸€åæ˜¯å¦ç­‰äº0
+        //Èç¹ûstate==0·µ»Øfalse ·ñÔòCAS½«state¼õÒ» Èç¹û·µ»Ø¼õÒ»ºóÊÇ·ñµÈÓÚ0
         protected boolean tryReleaseShared(int releases) {
             // Decrement count; signal when transition to zero
             for (;;) {
