@@ -144,8 +144,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             }
             return false;
         }
-        //å¦‚æœexclusiveOwnerThreadä¸æ˜¯å½“å‰çº¿ç¨‹ æŠ›å‡ºå¼‚å¸¸ å¦‚æœå½“å‰state-releasesä¸º0è¿”å›true å¹¶ç½®ç©ºexclusiveOwnerThread
-        protected final boolean tryRelease(int releases) {// å¦åˆ™è¿”å›false è®¾ç½®stateä¸ºstate-releases
+        //Èç¹ûexclusiveOwnerThread²»ÊÇµ±Ç°Ïß³Ì Å×³öÒì³£ Èç¹ûµ±Ç°state-releasesÎª0·µ»Øtrue ²¢ÖÃ¿ÕexclusiveOwnerThread
+        protected final boolean tryRelease(int releases) {// ·ñÔò·µ»Øfalse ÉèÖÃstateÎªstate-releases
             int c = getState() - releases;
             if (Thread.currentThread() != getExclusiveOwnerThread())
                 throw new IllegalMonitorStateException();
@@ -186,7 +186,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * Reconstitutes the instance from a stream (that is, deserializes it).
          */
         private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
+                throws java.io.IOException, ClassNotFoundException {
             s.defaultReadObject();
             setState(0); // reset to unlocked state
         }
@@ -203,7 +203,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * acquire on failure.
          */
         final void lock() {
-            if (compareAndSetState(0, 1))
+            if (compareAndSetState(0, 1))//³¢ÊÔCAS»ñÈ¡Ëø×ÊÔ´ Èç¹û³É¹¦½«exclusiveOwnerThreadÉèÖÃÎªµ±Ç°Ïß³Ì
                 setExclusiveOwnerThread(Thread.currentThread());
             else
                 acquire(1);
@@ -232,8 +232,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             final Thread current = Thread.currentThread();
             int c = getState();
             if (c == 0) {
-                if (!hasQueuedPredecessors() &&
-                    compareAndSetState(0, acquires)) {
+                if (!hasQueuedPredecessors() &&//Í·Î²½ÚµãÏàµÈ»îÍ·½áµãµÄÏÂÒ»½ÚµãÊÇµ±Ç°½Úµã
+                        compareAndSetState(0, acquires)) {
                     setExclusiveOwnerThread(current);
                     return true;
                 }
@@ -756,7 +756,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     public String toString() {
         Thread o = sync.getOwner();
         return super.toString() + ((o == null) ?
-                                   "[Unlocked]" :
-                                   "[Locked by thread " + o.getName() + "]");
+                "[Unlocked]" :
+                "[Locked by thread " + o.getName() + "]");
     }
 }
