@@ -258,7 +258,7 @@ abstract class Striped64 extends Number {
                 else if (cellsBusy == 0 && casCellsBusy()) {
                     try {
                         if (cells == as) {      // Expand table unless stale
-                            Cell[] rs = new Cell[n << 1];
+                            Cell[] rs = new Cell[n << 1];//扩容为两倍
                             for (int i = 0; i < n; ++i)
                                 rs[i] = as[i];
                             cells = rs;
@@ -271,7 +271,7 @@ abstract class Striped64 extends Number {
                 }
                 h = advanceProbe(h);
             }
-            else if (cellsBusy == 0 && cells == as && casCellsBusy()) {
+            else if (cellsBusy == 0 && cells == as && casCellsBusy()) {//如果没有初始化  通过cellsBusy CAS控制并发
                 boolean init = false;
                 try {                           // Initialize table
                     if (cells == as) {
@@ -287,7 +287,7 @@ abstract class Striped64 extends Number {
                     break;
             }
             else if (casBase(v = base, ((fn == null) ? v + x :
-                                        fn.applyAsLong(v, x))))
+                                        fn.applyAsLong(v, x))))//如果正在初始化则尝试直接加到base上
                 break;                          // Fall back on using base
         }
     }
