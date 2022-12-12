@@ -83,11 +83,11 @@ public class LongAdder extends Striped64 implements Serializable {
      */
     public void add(long x) {
         Cell[] as; long b, v; int m; Cell a;
-        if ((as = cells) != null || !casBase(b = base, b + x)) {
+        if ((as = cells) != null || !casBase(b = base, b + x)) {//如果cells还是null  尝试直接在base里Cas设置一次
             boolean uncontended = true;
             if (as == null || (m = as.length - 1) < 0 ||
-                (a = as[getProbe() & m]) == null ||
-                !(uncontended = a.cas(v = a.value, v + x)))
+                    (a = as[getProbe() & m]) == null ||
+                    !(uncontended = a.cas(v = a.value, v + x)))//如果cells为null或者cells长度<1或者cells
                 longAccumulate(x, null, uncontended);
         }
     }

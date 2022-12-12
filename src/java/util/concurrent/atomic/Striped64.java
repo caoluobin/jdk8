@@ -220,19 +220,19 @@ abstract class Striped64 extends Number {
             wasUncontended = true;
         }
         boolean collide = false;                // True if last slot nonempty
-        for (;;) {
+        for (;;) {//for循环如果cas失败就继续尝试
             Cell[] as; Cell a; int n; long v;
-            if ((as = cells) != null && (n = as.length) > 0) {
-                if ((a = as[(n - 1) & h]) == null) {
-                    if (cellsBusy == 0) {       // Try to attach new Cell
-                        Cell r = new Cell(x);   // Optimistically create
-                        if (cellsBusy == 0 && casCellsBusy()) {
+            if ((as = cells) != null && (n = as.length) > 0) {//如果cells已初始化 且长度大于零
+                if ((a = as[(n - 1) & h]) == null) {//如果cells对应元素还是null
+                    if (cellsBusy == 0) {       // Try to attach new Cell 
+                        Cell r = new Cell(x);   // Optimistically create 初始化cell  value值
+                        if (cellsBusy == 0 && casCellsBusy()) {//将cellsBusy  CAS 加1
                             boolean created = false;
                             try {               // Recheck under lock
                                 Cell[] rs; int m, j;
                                 if ((rs = cells) != null &&
                                     (m = rs.length) > 0 &&
-                                    rs[j = (m - 1) & h] == null) {
+                                    rs[j = (m - 1) & h] == null) {//如果cells对应位置还没初始化则赋值
                                     rs[j] = r;
                                     created = true;
                                 }

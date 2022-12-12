@@ -849,7 +849,7 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in exclusive uninterruptible mode for thread already in
      * queue. Used by condition wait methods as well as acquire.
-     * 如果node是第二个节点 尝试将node改为头节点 并返回interrupted 否则
+     * 如果node是第二个节点 尝试将node改为头节点 并返回interrupted 否则挂起
      * @param node the node
      * @param arg the acquire argument
      * @return {@code true} if interrupted while waiting
@@ -859,7 +859,7 @@ public abstract class AbstractQueuedSynchronizer
         try {
             boolean interrupted = false;
             for (;;) {
-                final Node p = node.predecessor();
+                final Node p = node.predecessor();//获取node的前一节点
                 if (p == head && tryAcquire(arg)) {
                     setHead(node);
                     p.next = null; // help GC
@@ -867,7 +867,7 @@ public abstract class AbstractQueuedSynchronizer
                     return interrupted;
                 }
                 if (shouldParkAfterFailedAcquire(p, node) &&//如果p ws为-1则返回true 并挂起当前线程
-                    parkAndCheckInterrupt())// 如果p ws大于0 去除node前面ws>0的节点 并充值node的前节点 否则态改为-1 返回f将p的姿alse
+                    parkAndCheckInterrupt())// 如果p ws大于0 去除node前面ws>0的节点 并重置node的前节点 返回false 否则态改为-1 返回false
                     interrupted = true;
             }
         } finally {
