@@ -202,7 +202,7 @@ public class ThreadLocal<T> {
         if (map != null)
             map.set(this, value);
         else
-            createMap(t, value);
+            createMap(t, value);//进行ThreadLocalMap初始化 创建长度为16的Entry数组
     }
 
     /**
@@ -463,22 +463,22 @@ public class ThreadLocal<T> {
             int i = key.threadLocalHashCode & (len-1);
 
             for (Entry e = tab[i];
-                 e != null;
+                 e != null;//由于当size到达len的四份之三的时候就会扩容  因此必定会等于null结束循环
                  e = tab[i = nextIndex(i, len)]) {
                 ThreadLocal<?> k = e.get();
 
-                if (k == key) {
+                if (k == key) {//如果当前线程已经保存过当前ThreadLocal值 则直接替换
                     e.value = value;
                     return;
                 }
 
-                if (k == null) {
+                if (k == null) {//如果当前位置Entry的ThreadLocal已经过期(被GC)  则替换
                     replaceStaleEntry(key, value, i);
                     return;
                 }
             }
 
-            tab[i] = new Entry(key, value);
+            tab[i] = new Entry(key, value);//tab[i]==null 则创建一个新的Entry放入
             int sz = ++size;
             if (!cleanSomeSlots(i, sz) && sz >= threshold)
                 rehash();
@@ -527,16 +527,16 @@ public class ThreadLocal<T> {
             // We clean out whole runs at a time to avoid continual
             // incremental rehashing due to garbage collector freeing
             // up refs in bunches (i.e., whenever the collector runs).
-            int slotToExpunge = staleSlot;
-            for (int i = prevIndex(staleSlot, len);
+            int slotToExpunge = staleSlot;//过期槽位
+            for (int i = prevIndex(staleSlot, len);//前一个槽位
                  (e = tab[i]) != null;
                  i = prevIndex(i, len))
-                if (e.get() == null)
+                if (e.get() == null)//找到出空entry外 最前面的过期槽位
                     slotToExpunge = i;
 
             // Find either the key or trailing null slot of run, whichever
             // occurs first
-            for (int i = nextIndex(staleSlot, len);
+            for (int i = nextIndex(staleSlot, len);//下一个槽位
                  (e = tab[i]) != null;
                  i = nextIndex(i, len)) {
                 ThreadLocal<?> k = e.get();
@@ -546,14 +546,14 @@ public class ThreadLocal<T> {
                 // The newly stale slot, or any other stale slot
                 // encountered above it, can then be sent to expungeStaleEntry
                 // to remove or rehash all of the other entries in run.
-                if (k == key) {
+                if (k == key) {//如果找到了相同的
                     e.value = value;
-
+                    //tab[staleSlot] 过期槽位  和tab[i]交换数据
                     tab[i] = tab[staleSlot];
                     tab[staleSlot] = e;
 
                     // Start expunge at preceding stale entry if it exists
-                    if (slotToExpunge == staleSlot)
+                    if (slotToExpunge == staleSlot)//slotToExpunge如果没变则改到i位置
                         slotToExpunge = i;
                     cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
                     return;
@@ -602,13 +602,13 @@ public class ThreadLocal<T> {
                  (e = tab[i]) != null;
                  i = nextIndex(i, len)) {
                 ThreadLocal<?> k = e.get();
-                if (k == null) {
+                if (k == null) {//如果已经过期 则直接置null
                     e.value = null;
                     tab[i] = null;
                     size--;
                 } else {
                     int h = k.threadLocalHashCode & (len - 1);
-                    if (h != i) {
+                    if (h != i) {//如果hash值不一样  则从h重新开始往下数 放到最近的位置里
                         tab[i] = null;
 
                         // Unlike Knuth 6.4 Algorithm R, we must scan until
@@ -653,7 +653,7 @@ public class ThreadLocal<T> {
             do {
                 i = nextIndex(i, len);
                 Entry e = tab[i];
-                if (e != null && e.get() == null) {
+                if (e != null && e.get() == null) {//
                     n = len;
                     removed = true;
                     i = expungeStaleEntry(i);
