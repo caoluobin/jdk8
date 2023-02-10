@@ -607,7 +607,7 @@ public class ThreadLocal<T> {
                     tab[i] = null;
                     size--;
                 } else {
-                    int h = k.threadLocalHashCode & (len - 1);
+                    int h = k.threadLocalHashCode & (len - 1);//取当前key的正确位置
                     if (h != i) {//如果hash值不一样  则从h重新开始往下数 放到最近的位置里
                         tab[i] = null;
 

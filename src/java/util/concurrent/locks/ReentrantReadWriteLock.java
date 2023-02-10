@@ -377,7 +377,7 @@ public class ReentrantReadWriteLock
             return free;
         }
 
-        protected final boolean tryAcquire(int acquires) {
+        protected final boolean tryAcquire(int acquires) {//写锁
             /*
              * Walkthrough:
              * 1. If read count nonzero or write count nonzero
@@ -391,7 +391,7 @@ public class ReentrantReadWriteLock
              */
             Thread current = Thread.currentThread();
             int c = getState();
-            int w = exclusiveCount(c);//获取前16位数据 独占锁数据
+            int w = exclusiveCount(c);//获取前16位数据 写锁数据
             if (c != 0) {
                 // (Note: if c != 0 and w == 0 then shared count != 0) 即如果有读锁占有锁  则写锁需要读锁先释放锁
                 if (w == 0 || current != getExclusiveOwnerThread())
@@ -399,7 +399,7 @@ public class ReentrantReadWriteLock
                 if (w + exclusiveCount(acquires) > MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
                 // Reentrant acquire
-                setState(c + acquires);
+                setState(c + acquires);//如果只被当前线程持有写锁
                 return true;
             }
             if (writerShouldBlock() ||//公平锁如果不是下一个节点需要等待  非公平锁不需等待直接返回false
@@ -411,7 +411,7 @@ public class ReentrantReadWriteLock
 
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
-            if (firstReader == current) {
+            if (firstReader == current) {//如果当前线程是第一个读线程
                 // assert firstReaderHoldCount > 0;
                 if (firstReaderHoldCount == 1)
                     firstReader = null;
@@ -427,7 +427,7 @@ public class ReentrantReadWriteLock
                     if (count <= 0)
                         throw unmatchedUnlockException();
                 }
-                --rh.count;
+                --rh.count;//其他线程持有count-1
             }
             for (;;) {
                 int c = getState();
@@ -445,7 +445,7 @@ public class ReentrantReadWriteLock
                 "attempt to unlock read lock, not locked by current thread");
         }
 
-        protected final int tryAcquireShared(int unused) {
+        protected final int tryAcquireShared(int unused) {//读锁
             /*
              * Walkthrough:
              * 1. If write lock held by another thread, fail.
@@ -507,7 +507,7 @@ public class ReentrantReadWriteLock
                         return -1;
                     // else we hold the exclusive lock; blocking here
                     // would cause deadlock.
-                } else if (readerShouldBlock()) {//公平锁：如果头尾节点相等（没有等待线程）或者下一节点不为空且为当前节点
+                } else if (readerShouldBlock()) {//公平锁：如果头尾节点不相等且(下一节点为空或不为当前节点) 读读情况下直接跳过
                     // Make sure we're not acquiring read lock reentrantly
                     if (firstReader == current) {
                         // assert firstReaderHoldCount > 0;

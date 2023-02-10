@@ -346,7 +346,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
              * signalled if it ever changes from capacity. Similarly
              * for all other uses of count in other wait guards.
              */
-            while (count.get() == capacity) {
+            while (count.get() == capacity) {//如果列表满了 则等待
                 notFull.await();
             }
             enqueue(node);
@@ -410,17 +410,17 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
     public boolean offer(E e) {
         if (e == null) throw new NullPointerException();
         final AtomicInteger count = this.count;
-        if (count.get() == capacity)
+        if (count.get() == capacity)//如果列表满了直接返回false
             return false;
         int c = -1;
         Node<E> node = new Node<E>(e);
         final ReentrantLock putLock = this.putLock;
         putLock.lock();
         try {
-            if (count.get() < capacity) {
-                enqueue(node);
+            if (count.get() < capacity) {//如果列表数小于容量
+                enqueue(node);//往队尾增加一个节点
                 c = count.getAndIncrement();
-                if (c + 1 < capacity)
+                if (c + 1 < capacity)//如果列表还没满
                     notFull.signal();
             }
         } finally {
@@ -439,17 +439,17 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lockInterruptibly();
         try {
-            while (count.get() == 0) {
+            while (count.get() == 0) {//如果列表中没有数据 等待
                 notEmpty.await();
             }
             x = dequeue();
             c = count.getAndDecrement();
-            if (c > 1)
+            if (c > 1)//如果列表还有数据
                 notEmpty.signal();
         } finally {
             takeLock.unlock();
         }
-        if (c == capacity)
+        if (c == capacity)//如果列表比容量少1
             signalNotFull();
         return x;
     }

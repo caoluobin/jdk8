@@ -708,21 +708,21 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     final void tryTerminate() {
         for (;;) {
             int c = ctl.get();
-            if (isRunning(c) ||
-                runStateAtLeast(c, TIDYING) ||
-                (runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))
-                return;
-            if (workerCountOf(c) != 0) { // Eligible to terminate
-                interruptIdleWorkers(ONLY_ONE);
+            if (isRunning(c) ||//如果还在运行中
+                runStateAtLeast(c, TIDYING) ||//或状态是TIDYING或者TERMINATED
+                (runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))//或者状态是SHUTDOWN且workQueue不为空  直接返回
+                return;//如果状态是 STOP或者  (SHUTDOWN且workQueue为空则往下)
+            if (workerCountOf(c) != 0) { // Eligible to terminate   如果工作线程不为0
+                interruptIdleWorkers(ONLY_ONE);//加锁打断第一个work线程
                 return;
             }
 
             final ReentrantLock mainLock = this.mainLock;
             mainLock.lock();
             try {
-                if (ctl.compareAndSet(c, ctlOf(TIDYING, 0))) {
+                if (ctl.compareAndSet(c, ctlOf(TIDYING, 0))) {//将ctl 改为TIDYING
                     try {
-                        terminated();
+                        terminated();//关闭线程回调函数
                     } finally {
                         ctl.set(ctlOf(TERMINATED, 0));
                         termination.signalAll();
@@ -803,7 +803,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         try {
             for (Worker w : workers) {
                 Thread t = w.thread;
-                if (!t.isInterrupted() && w.tryLock()) {
+                if (!t.isInterrupted() && w.tryLock()) {//如果线程没被打断 则加锁打断
                     try {
                         t.interrupt();
                     } catch (SecurityException ignore) {
@@ -1046,7 +1046,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
         int c = ctl.get();
         if (runStateLessThan(c, STOP)) {
-            if (!completedAbruptly) {
+            if (!completedAbruptly) {//如果正常结束
                 int min = allowCoreThreadTimeOut ? 0 : corePoolSize;
                 if (min == 0 && ! workQueue.isEmpty())
                     min = 1;
@@ -1090,7 +1090,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             int wc = workerCountOf(c);
 
             // Are workers subject to culling?
-            boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
+            boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;//如果工作线程大于核心线程数
 
             if ((wc > maximumPoolSize || (timed && timedOut))
                 && (wc > 1 || workQueue.isEmpty())) {
@@ -1101,8 +1101,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
             try {
                 Runnable r = timed ?
-                    workQueue.poll(keepAliveTime, TimeUnit.NANOSECONDS) :
-                    workQueue.take();
+                    workQueue.poll(keepAliveTime, TimeUnit.NANOSECONDS) ://如果工作线程大于核心线程则有超时时间 返回结束线程
+                    workQueue.take();//如果工作线程小于等于核心线程则阻塞获取任务
                 if (r != null)
                     return r;
                 timedOut = true;
@@ -1441,8 +1441,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         mainLock.lock();
         try {
             checkShutdownAccess();
-            advanceRunState(SHUTDOWN);
-            interruptIdleWorkers();
+            advanceRunState(SHUTDOWN);//将状态cas修改为SHUTDOWN
+            interruptIdleWorkers();//打断workers中的所有线程
             onShutdown(); // hook for ScheduledThreadPoolExecutor
         } finally {
             mainLock.unlock();
