@@ -327,8 +327,8 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         checkNotNull(e);
         final Node<E> newNode = new Node<E>(e);
 
-        for (Node<E> t = tail, p = t;;) {
-            Node<E> q = p.next;
+        for (Node<E> t = tail, p = t;;) {// t: tail p: a  tail->a
+            Node<E> q = p.next;//q null
             if (q == null) {
                 // p is last node
                 if (p.casNext(null, newNode)) {

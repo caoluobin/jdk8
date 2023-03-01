@@ -2350,7 +2350,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                         int p = config & SMASK; // ensure at least 2 slots
                         int n = (p > 1) ? p - 1 : 1;
                         n |= n >>> 1; n |= n >>> 2;  n |= n >>> 4;
-                        n |= n >>> 8; n |= n >>> 16; n = (n + 1) << 1;
+                        n |= n >>> 8; n |= n >>> 16; n = (n + 1) << 1;//变成大于n的 2的幂次数*2
                         workQueues = new WorkQueue[n];
                         ns = STARTED;
                     }

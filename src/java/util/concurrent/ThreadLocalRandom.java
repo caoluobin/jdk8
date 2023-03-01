@@ -219,7 +219,7 @@ public class ThreadLocalRandom extends Random {
      */
     public static ThreadLocalRandom current() {
         if (UNSAFE.getInt(Thread.currentThread(), PROBE) == 0)
-            localInit();
+            localInit();//初始化当前线程的seed值
         return instance;
     }
 

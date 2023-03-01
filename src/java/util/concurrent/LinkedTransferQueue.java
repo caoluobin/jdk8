@@ -605,7 +605,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if haveData mode but e is null
      */
     private E xfer(E e, boolean haveData, int how, long nanos) {
-        if (haveData && (e == null))
+        if (haveData && (e == null))//如果有数据 且数据为null 则直接抛出异常
             throw new NullPointerException();
         Node s = null;                        // the node to append, if needed
 
@@ -615,13 +615,13 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             for (Node h = head, p = h; p != null;) { // find & match first node
                 boolean isData = p.isData;
                 Object item = p.item;
-                if (item != p && (item != null) == isData) { // unmatched
-                    if (isData == haveData)   // can't match
+                if (item != p && (item != null) == isData) { // item和p不同  且item和isDta一致
+                    if (isData == haveData)   // can't match 
                         break;
-                    if (p.casItem(item, e)) { // match
-                        for (Node q = p; q != h;) {
+                    if (p.casItem(item, e)) { // match  取数据
+                        for (Node q = p; q != h;) {//如果q不为头结点
                             Node n = q.next;  // update by 2 unless singleton
-                            if (head == h && casHead(h, n == null ? q : n)) {
+                            if (head == h && casHead(h, n == null ? q : n)) {//加了两个以后取两个
                                 h.forgetNext();
                                 break;
                             }                 // advance and retry
@@ -634,7 +634,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                     }
                 }
                 Node n = p.next;
-                p = (p != n) ? n : (h = head); // Use head if p offlist
+                p = (p != n) ? n : (h = head); // 如果p和next不相同 则p指向next  否则从头开始
             }
 
             if (how != NOW) {                 // No matches available
@@ -662,7 +662,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
     private Node tryAppend(Node s, boolean haveData) {
         for (Node t = tail, p = t;;) {        // move p to last node and append
             Node n, u;                        // temps for reads of next & tail
-            if (p == null && (p = head) == null) {
+            if (p == null && (p = head) == null) {//如果是第一个节点 则设置head为当前节点
                 if (casHead(null, s))
                     return s;                 // initialize
             }
